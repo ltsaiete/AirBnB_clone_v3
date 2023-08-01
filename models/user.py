@@ -2,9 +2,9 @@
 """ holds class User"""
 import models
 from models.base_model import BaseModel, Base
-from os import getenv
-import sqlalchemy
-from sqlalchemy import Column, String
+from models import storage_t
+import hashlib
+from sqlalchemy import Column, String, event
 from sqlalchemy.orm import relationship
 
 
@@ -27,3 +27,11 @@ class User(BaseModel, Base):
     def __init__(self, *args, **kwargs):
         """initializes user"""
         super().__init__(*args, **kwargs)
+
+
+if storage_t == 'db':
+    @event.listens_for(User, 'before_insert')
+    @event.listens_for(User, 'before_update')
+    def hash_password(mapper, connection, target):
+        p = target.password
+        target.password = hashlib.md5(p.encode('utf8')).hexdigest()
